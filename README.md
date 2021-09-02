@@ -28,8 +28,8 @@ The .py and .ipynb files do the same thing and have almost identical code.
 
 ### Principal Component Analysis
 
-![Principal Component Analysis](bundestagswahl2021_pca_influences)
+![Principal Component Analysis](bundestagswahl2021_pca_map.svg)
 
 #### Principal Component Influences
 
-![Principal Component Influences](bundestagswahl2021_pca_map)
+![Principal Component Influences](bundestagswahl2021_pca_influences.svg)
