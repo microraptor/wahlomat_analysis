@@ -38,6 +38,8 @@ EMPHASIZED_PARTIES: list = [  # only lowercase (casefold)
     "cdu",
     "csu",
     "union",
+    "cdu/csu",
+    "cdu / csu",
     "afd",
 ]
 
