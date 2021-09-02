@@ -4,8 +4,7 @@
 It generates a correlation matrix and a principal component analysis map,
 where also clusters are marked.
 
-The code is inspired by /u/d_loose/ and /u/askLubich/
-See:
+The code is inspired by /u/d_loose/ and /u/askLubich/. See:
 https://www.reddit.com/r/de/comments/liad93/ich_habe_aus_dem_aktuellen_wahlomat/gn31jpv/
 https://github.com/askLubich/
 """
@@ -44,7 +43,7 @@ EMPHASIZED_PARTIES: list = [  # only lowercase (casefold)
 
 
 # Set seaborn theme and config
-sns.set(rc={"savefig.dpi": 300, "figure.dpi": 100})  # resets style for some reason
+sns.set(rc={"savefig.dpi": 300, "figure.dpi": 300})  # resets style for some reason
 sns.set_theme()
 sns.set_context("paper")
 sns.set_style("darkgrid")
@@ -167,6 +166,7 @@ for party_label in labels_col:
         )
 # Save as a file
 plt.savefig(f"{ELECTION}_c_matrix.svg", bbox_inches="tight")
+# plt.show()
 
 # %% Draw PCA map
 plt.figure(figsize=(10, 10))
@@ -198,6 +198,7 @@ for party_name in party_pca.index:
     )
 # Save as a file
 plt.savefig(f"{ELECTION}_pca_map.svg", bbox_inches="tight")
+# plt.show()
 
 # %% Draw PCA influence barplot
 plt.figure(figsize=(5, 12))
@@ -214,7 +215,7 @@ inf_barplot: plt.Axes = sns.barplot(
     orient="h",
 )
 inf_barplot.set(title="Komponenteneinfluss der Fragen", xlabel=None, ylabel=None)
-inf_barplot.legend(title=None)
+inf_barplot.legend(title=None, loc='upper right')
 inf_barplot.set_yticks(
     np.arange(-0.5, len(inf_barplot.get_yticks(minor=False)), 1), minor=True
 )
@@ -222,5 +223,6 @@ inf_barplot.grid(False, axis="x")
 inf_barplot.grid(True, which="minor", axis="y", linewidth=1)
 # Save as a file
 plt.savefig(f"{ELECTION}_pca_influences.svg", bbox_inches="tight")
+# plt.show()
 
 # %%
