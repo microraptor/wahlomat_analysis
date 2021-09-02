@@ -98,7 +98,7 @@ answer_df = pd.pivot_table(
     answer_df, values="answer", index="question", columns="party_name"
 )
 
-# %% Calculate Correlations, PCAs and clusters
+# %% Calculate correlations, PCAs and clusters
 answer_corr: DataFrame = answer_df.corr()
 corr_overlay: DataFrame = answer_corr.apply(
     lambda s: pd.Series([str(int(100 * x)) if x != 1 else "" for x in s])
