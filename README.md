@@ -20,9 +20,9 @@ https://github.com/askLubich/Wahl-O-Mat-EU-2019
 
 ### Principal Component Analysis
 
-![Principal Component Analysis](bundestagswahl2021_pca_influences.svg)
+![Principal Component Analysis](bundestagswahl2021_pca_map.svg)
 
 #### Principal Component Influences
 
-![Principal Component Influences](bundestagswahl2021_pca_map.svg)
+![Principal Component Influences](bundestagswahl2021_pca_influences.svg)
 
