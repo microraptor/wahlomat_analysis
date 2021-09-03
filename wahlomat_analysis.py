@@ -16,7 +16,6 @@ https://github.com/askLubich/
 # %% Import packages
 import urllib
 import re
-import numpy as np
 import pandas as pd
 from pandas.core.frame import DataFrame
 from sklearn.decomposition import PCA
@@ -114,7 +113,7 @@ km: KMeans = KMeans(N_CLUSTERS)
 party_pca["cluster"] = km.fit_predict(party_pca)
 pca_influences: DataFrame = question_df.join(
     pd.DataFrame(pca.components_.T, columns=["pca_x", "pca_y"])
-)
+).join(answer_df.sum(axis="columns").rename("answers_sum"))
 
 # %% Draw correlation matrix
 c_matrix: sns.matrix.ClusterGrid = sns.clustermap(
@@ -174,12 +173,14 @@ plt.savefig(f"{ELECTION}_c_matrix.svg", bbox_inches="tight")
 # %% Draw PCA map
 plt.figure(figsize=(10, 10))
 pca_map: plt.Axes = sns.scatterplot(
-    data=party_pca, x="pca_x", y="pca_y", hue="cluster", palette="deep", legend="full"
+    data=party_pca, x="pca_x", y="pca_y", hue="cluster", palette="bright", legend="full"
 )
 pca_map.set(
     title="Hauptkomponentenanalyse (PCA) der Parteien",
     xlabel=f"Komponente X (PC1)\n{round(pca_xvr * 100)}% Varianzanteil",
     ylabel=f"Komponente Y (PC2)\n{round(pca_yvr * 100)}% Varianzanteil",
+    xticklabels=[],
+    yticklabels=[],
 )
 pca_map.legend(
     title="Clusters",
@@ -190,18 +191,16 @@ pca_map.legend(
     ncol=2,
     handletextpad=0,
     columnspacing=0.2,
+    shadow=True,
+    borderaxespad=1,
 )
-# Tick spacing
-pca_map.xaxis.set_major_locator(
-    ticker.MaxNLocator(nbins=2, integer=True, min_n_ticks=3)
-)
-pca_map.yaxis.set_major_locator(
-    ticker.MaxNLocator(nbins=2, integer=True, min_n_ticks=3)
-)
+# Grid
+pca_map.set_xticks([0])
+pca_map.set_yticks([0])
 pca_map.xaxis.set_minor_locator(ticker.AutoLocator())
 pca_map.yaxis.set_minor_locator(ticker.AutoLocator())
-pca_map.grid(True, which="both", linewidth=0.3)
-pca_map.tick_params(labelsize=6)
+pca_map.grid(True, which="major", linewidth=1.2)
+pca_map.grid(True, which="minor", linewidth=0.3)
 # Add labels to the dots
 for party_name in party_pca.index:
     color: str = "black"
@@ -222,32 +221,52 @@ plt.savefig(f"{ELECTION}_pca_map.svg", bbox_inches="tight")
 # plt.show()
 
 # %% Draw PCA influence barplot
-plt.figure(figsize=(5, 12))
+# Scale data and adjust dataframe for plotting
+infl_prep = pca_influences.copy()
+infl_prep["answers_sum"] *= (
+    infl_prep[["pca_x", "pca_y"]].abs().max().max()
+    / infl_prep["answers_sum"].abs().max()
+)
+infl_prep = infl_prep.melt(
+    id_vars=["title"],
+    value_vars=["pca_x", "pca_y", "answers_sum"],
+    var_name="component",
+    value_name="influence",
+)
+# Plot prepared data
+plt.figure(figsize=(5, 18))
 inf_barplot: plt.Axes = sns.barplot(
-    data=pca_influences.melt(
-        id_vars=["title"],
-        value_vars=["pca_x", "pca_y"],
-        var_name="component",
-        value_name="influence",
-    ),
+    data=infl_prep,
     x="influence",
     y="title",
     hue="component",
     orient="h",
 )
-inf_barplot.set(title="Komponenteneinfluss der Fragen", xlabel=None, ylabel=None)
+inf_barplot.set(
+    xlabel=r"$\longleftarrow -$ /  Nein "
+    + r"$\qquad\qquad\qquad\qquad +$"
+    + r" /  Ja$\longrightarrow\qquad$",
+    ylabel=None,
+    xticklabels=[],
+)
 inf_barplot.legend(
     title=None,
     handles=inf_barplot.get_legend_handles_labels()[0],
-    labels=["X (PC1)", "Y (PC2)"],
-    loc="upper right",
+    labels=[
+        "Komponente X (PC1)",
+        "Komponente Y (PC2)",
+        "Antworten aller Parteien kumuliert",
+    ],
+    loc="lower center",
+    bbox_to_anchor=(0.5, 1.02),
     facecolor="white",
+    shadow=True,
 )
-inf_barplot.set_yticks(
-    np.arange(-0.5, len(inf_barplot.get_yticks(minor=False)), 1), minor=True
-)
+inf_barplot.set_yticks([x - 0.5 for x in inf_barplot.get_yticks()], minor=True)
 inf_barplot.grid(False, axis="x")
 inf_barplot.grid(True, which="minor", axis="y", linewidth=1)
+inf_barplot.xaxis.set_label_position("top")
+plt.suptitle("Einfluss der Fragen", y=0.95)
 # Save as a file
 plt.savefig(f"{ELECTION}_pca_influences.svg", bbox_inches="tight")
 # plt.show()
