@@ -14,7 +14,7 @@ Pull request and other improvements are welcome.
 
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/microraptor/wahlomat_analysis/HEAD?filepath=wahlomat_analysis.ipynb)
 
-You can open the notebook in your browser by clicking [the badge above](https://mybinder.org/v2/gh/microraptor/wahlomat_analysis/HEAD?filepath=wahlomat_analysis.ipynb). Then you can click the run button repeatedly to run each cell. It takes a moment for the plots to pop up.
+You can open the notebook in your browser by clicking [the badge above](https://mybinder.org/v2/gh/microraptor/wahlomat_analysis/HEAD?filepath=wahlomat_analysis.ipynb). Then you can click the run button repeatedly to run each cell. It takes a moment for the plots to pop up. Similarly, you can also run the whole thing on Google's cloud: [Google Colaboratory](https://colab.research.google.com/)
 
 The .py and .ipynb files in this repo do the same thing and have almost identical code.
 

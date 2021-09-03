@@ -22,6 +22,7 @@ from pandas.core.frame import DataFrame
 from sklearn.decomposition import PCA
 from sklearn.cluster import KMeans
 import matplotlib.pyplot as plt
+from matplotlib import ticker
 from matplotlib.patches import Rectangle
 import seaborn as sns
 
@@ -42,7 +43,6 @@ EMPHASIZED_PARTIES: list = [  # only lowercase (casefold)
     "cdu / csu",
     "afd",
 ]
-
 
 # Set seaborn theme and config
 sns.set(rc={"savefig.dpi": 300, "figure.dpi": 300})  # resets style for some reason
@@ -100,15 +100,16 @@ answer_df = pd.pivot_table(
     answer_df, values="answer", index="question", columns="party_name"
 )
 
-# %% Calculate correlations, PCAs and clusters
+# %% Calculate correlation, PCA and clusters
 answer_corr: DataFrame = answer_df.corr()
 corr_overlay: DataFrame = answer_corr.apply(
     lambda s: pd.Series([str(int(100 * x)) if x != 1 else "" for x in s])
 )
-pca: PCA = PCA(2)
+pca: PCA = PCA(n_components=2)
 party_pca: DataFrame = pd.DataFrame(
     pca.fit_transform(answer_df.T), columns=["pca_x", "pca_y"], index=answer_df.T.index
 )
+pca_xvr, pca_yvr = pca.explained_variance_ratio_
 km: KMeans = KMeans(N_CLUSTERS)
 party_pca["cluster"] = km.fit_predict(party_pca)
 pca_influences: DataFrame = question_df.join(
@@ -173,16 +174,34 @@ plt.savefig(f"{ELECTION}_c_matrix.svg", bbox_inches="tight")
 # %% Draw PCA map
 plt.figure(figsize=(10, 10))
 pca_map: plt.Axes = sns.scatterplot(
-    data=party_pca, x="pca_x", y="pca_y", hue="cluster", palette="deep"
+    data=party_pca, x="pca_x", y="pca_y", hue="cluster", palette="deep", legend="full"
 )
 pca_map.set(
     title="Hauptkomponentenanalyse (PCA) der Parteien",
-    xlabel="Komponente X",
-    ylabel="Komponente Y",
-    xticklabels=[],
-    yticklabels=[],
+    xlabel=f"Komponente X (PC1)\n{round(pca_xvr * 100)}% Varianzanteil",
+    ylabel=f"Komponente Y (PC2)\n{round(pca_yvr * 100)}% Varianzanteil",
 )
-pca_map.legend(title="Cluster")
+pca_map.legend(
+    title="Clusters",
+    handles=pca_map.get_legend_handles_labels()[0],
+    labels=[""] * party_pca["cluster"].nunique(),
+    facecolor="white",
+    markerscale=1.5,
+    ncol=2,
+    handletextpad=0,
+    columnspacing=0.2,
+)
+# Tick spacing
+pca_map.xaxis.set_major_locator(
+    ticker.MaxNLocator(nbins=2, integer=True, min_n_ticks=3)
+)
+pca_map.yaxis.set_major_locator(
+    ticker.MaxNLocator(nbins=2, integer=True, min_n_ticks=3)
+)
+pca_map.xaxis.set_minor_locator(ticker.AutoLocator())
+pca_map.yaxis.set_minor_locator(ticker.AutoLocator())
+pca_map.grid(True, which="both", linewidth=0.3)
+pca_map.tick_params(labelsize=6)
 # Add labels to the dots
 for party_name in party_pca.index:
     color: str = "black"
@@ -191,8 +210,8 @@ for party_name in party_pca.index:
         color = "darkblue"
         fontweight = "bold"
     pca_map.text(
-        x=party_pca.loc[party_name, "pca_x"] + 0.1,
-        y=party_pca.loc[party_name, "pca_y"] + 0.1,
+        x=party_pca.loc[party_name, "pca_x"] + 0.05,
+        y=party_pca.loc[party_name, "pca_y"] + 0.05,
         s=party_name,
         color=color,
         fontweight=fontweight,
@@ -217,7 +236,13 @@ inf_barplot: plt.Axes = sns.barplot(
     orient="h",
 )
 inf_barplot.set(title="Komponenteneinfluss der Fragen", xlabel=None, ylabel=None)
-inf_barplot.legend(title=None, loc='upper right')
+inf_barplot.legend(
+    title=None,
+    handles=inf_barplot.get_legend_handles_labels()[0],
+    labels=["X (PC1)", "Y (PC2)"],
+    loc="upper right",
+    facecolor="white",
+)
 inf_barplot.set_yticks(
     np.arange(-0.5, len(inf_barplot.get_yticks(minor=False)), 1), minor=True
 )
