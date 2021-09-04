@@ -65,10 +65,10 @@ titles: list = re.findall(
 questions: list = re.findall(
     r"^WOMT_aThesen\[\d+\]\[\d+\]\[1] = \'(.+?)\';$", raw_data_js, re.MULTILINE
 )
-party_names: list = re.findall(
+party_names_full: list = re.findall(
     r"^WOMT_aParteien\[\d+\]\[\d+\]\[0] ?= ?\'(.+?)\';$", raw_data_js, re.MULTILINE
 )
-party_abbrevs: list = re.findall(
+party_names: list = re.findall(
     r"^WOMT_aParteien\[\d+\]\[\d+\]\[1] ?= ?\'(.+?)\';$", raw_data_js, re.MULTILINE
 )
 raw_answers: list = re.findall(
@@ -82,55 +82,55 @@ question_df: DataFrame = pd.DataFrame(
     zip(titles, questions), columns=["title", "question"]
 )
 party_df: DataFrame = pd.DataFrame(
-    zip(party_names, party_abbrevs), columns=["full_name", "party"]
+    zip(party_names_full, party_names), columns=["full_name", "party_name"]
 )
 answer_df: DataFrame = pd.DataFrame(
-    raw_answers, columns=["question", "party", "answer"]
+    raw_answers, columns=["question", "party_id", "answer"]
 ).astype("int")
 # Exclude bad parties
 bad_parties: pd.core.indexes.base.Index = party_df.loc[
-    answer_df.groupby("party")["answer"].std() == 0
+    answer_df.groupby("party_id")["answer"].std() == 0
 ].index
 for party in bad_parties:
-    answer_df = answer_df[answer_df["party"] != party]
-# Pivot answer dataframe to have parties as columns
-answer_df["party_name"] = answer_df["party"].apply(lambda x: party_df.loc[x, "party"])
+    answer_df = answer_df[answer_df["party_id"] != party]
+# Modify answer dataframe to have party names as rows and questions as columns
+answer_df = answer_df.join(party_df, on="party_id")
 answer_df = pd.pivot_table(
     answer_df, values="answer", index="question", columns="party_name"
 )
 
 # %% Calculate correlation, PCA and clusters
 answer_corr: DataFrame = answer_df.corr()
-corr_overlay: DataFrame = answer_corr.apply(
-    lambda s: pd.Series([str(int(100 * x)) if x != 1 else "" for x in s])
-)
-pca: PCA = PCA(n_components=2)
+pca: PCA = PCA(n_components=3)
 party_pca: DataFrame = pd.DataFrame(
-    pca.fit_transform(answer_df.T), columns=["pca_x", "pca_y"], index=answer_df.T.index
+    pca.fit_transform(answer_df.T),
+    columns=["pca_x", "pca_y", "pca_z"],
+    index=answer_df.T.index,
 )
-pca_xvr, pca_yvr = pca.explained_variance_ratio_
 km: KMeans = KMeans(N_CLUSTERS)
 party_pca["cluster"] = km.fit_predict(party_pca)
 pca_influences: DataFrame = question_df.join(
-    pd.DataFrame(pca.components_.T, columns=["pca_x", "pca_y"])
-).join(answer_df.sum(axis="columns").rename("answers_sum"))
+    pd.DataFrame(pca.components_.T, columns=["pca_x", "pca_y", "pca_z"])
+).join(answer_df.sum(axis="rows").rename("answers_sum"))
+pca_xvr, pca_yvr, pca_zvr = pca.explained_variance_ratio_
 
 # %% Draw correlation matrix
+plt.clf()
 c_matrix: sns.matrix.ClusterGrid = sns.clustermap(
     data=answer_corr,
     cmap="RdYlGn",
     center=0,
     cbar_pos=None,
-    annot=corr_overlay,
+    annot=answer_corr.applymap(lambda x: str(round(x * 100))).replace({"100": ""}),
     fmt="",
     annot_kws={"fontsize": 8},
     linewidths=0.8,
     figsize=(12, 12),
 )
-c_matrix.fig.delaxes(c_matrix.ax_col_dendrogram)
+c_matrix.fig.suptitle("Übereinstimmungen der Parteien (in %)", y=0.86)
+c_matrix.ax_col_dendrogram.remove()
 c_matrix.ax_heatmap.set(xlabel=None, ylabel=None)
 c_matrix.ax_row_dendrogram.set(title="Cluster-Hierarchie")
-c_matrix.fig.suptitle("Übereinstimmungen der Parteien (in %)", y=0.86)
 # Emphasize specific parties
 labels_row: list = c_matrix.ax_heatmap.get_yticklabels()
 labels_col: list = c_matrix.ax_heatmap.get_xticklabels()
@@ -171,14 +171,17 @@ plt.savefig(f"{ELECTION}_c_matrix.svg", bbox_inches="tight")
 # plt.show()
 
 # %% Draw PCA map
+plt.clf()
 plt.figure(figsize=(10, 10))
+plt.suptitle("Hauptkomponentenanalyse (PCA) der Parteien", y=0.92)
 pca_map: plt.Axes = sns.scatterplot(
     data=party_pca, x="pca_x", y="pca_y", hue="cluster", palette="bright", legend="full"
 )
 pca_map.set(
-    title="Hauptkomponentenanalyse (PCA) der Parteien",
     xlabel=f"Komponente X (PC1)\n{round(pca_xvr * 100)}% Varianzanteil",
     ylabel=f"Komponente Y (PC2)\n{round(pca_yvr * 100)}% Varianzanteil",
+    xticks=[0],
+    yticks=[0],
     xticklabels=[],
     yticklabels=[],
 )
@@ -195,8 +198,6 @@ pca_map.legend(
     borderaxespad=1,
 )
 # Grid
-pca_map.set_xticks([0])
-pca_map.set_yticks([0])
 pca_map.xaxis.set_minor_locator(ticker.AutoLocator())
 pca_map.yaxis.set_minor_locator(ticker.AutoLocator())
 pca_map.grid(True, which="major", linewidth=1.2)
@@ -234,7 +235,9 @@ infl_prep = infl_prep.melt(
     value_name="influence",
 )
 # Plot prepared data
+plt.clf()
 plt.figure(figsize=(5, 18))
+plt.suptitle("Einfluss der Fragen", y=0.95)
 inf_barplot: plt.Axes = sns.barplot(
     data=infl_prep,
     x="influence",
@@ -243,11 +246,12 @@ inf_barplot: plt.Axes = sns.barplot(
     orient="h",
 )
 inf_barplot.set(
-    xlabel=r"$\longleftarrow -$ /  Nein "
-    + r"$\qquad\qquad\qquad\qquad +$"
-    + r" /  Ja$\longrightarrow\qquad$",
+    xlabel=None,
     ylabel=None,
-    xticklabels=[],
+    xticks=[0],
+    xticklabels=[
+        r"$\longleftarrow$ $-$ / Nein                   $+$ / Ja $\longrightarrow$"
+    ],
 )
 inf_barplot.legend(
     title=None,
@@ -262,11 +266,10 @@ inf_barplot.legend(
     facecolor="white",
     shadow=True,
 )
+inf_barplot.tick_params(axis='x', labelbottom=False, labeltop=True, length=0)
 inf_barplot.set_yticks([x - 0.5 for x in inf_barplot.get_yticks()], minor=True)
 inf_barplot.grid(False, axis="x")
 inf_barplot.grid(True, which="minor", axis="y", linewidth=1)
-inf_barplot.xaxis.set_label_position("top")
-plt.suptitle("Einfluss der Fragen", y=0.95)
 # Save as a file
 plt.savefig(f"{ELECTION}_pca_influences.svg", bbox_inches="tight")
 # plt.show()
