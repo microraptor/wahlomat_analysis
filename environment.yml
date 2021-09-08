@@ -1,9 +1,0 @@
-name: wahlomat-analysis
-channels:
-    - conda-forge
-dependencies:
-    - matplotlib
-    - seaborn
-    - numpy
-    - pandas
-    - scikit-learn
