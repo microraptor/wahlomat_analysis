@@ -312,6 +312,19 @@ for party_name in party_pca.index:
         fontsize="small",
     )
 
+# Add rugplot (ticks along the x and y axes)
+rugplt = sns.rugplot(
+    ax=pca_map,
+    data=party_pca,
+    x="pca_x",
+    y="pca_y",
+    hue="cluster",
+    palette="bright",
+    legend=False,
+    clip_on=False,
+    height=-0.01,
+)
+
 # Save as a file or show plot
 plt.savefig(f"{ELECTION}_pca_map.svg", bbox_inches="tight")
 # files.download(f"{ELECTION}_pca_map.svg")  # Google Colab only
