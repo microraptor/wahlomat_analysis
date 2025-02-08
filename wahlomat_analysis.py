@@ -45,6 +45,10 @@ from sklearn.decomposition import PCA
 ELECTION: str = "bundestagswahl2021"  # Part of the URL: www.wahl-o-mat.de/ELECTION/...
 ELECTION_NAME: str = "Bundestagswahl 2021"  # Only used in the titles of charts
 
+# Invert x-axis (PC1) of the PCA map
+# This can be used to set the axis according to the classical left–right politcal spectrum
+INVERT_PC1_AXIS: bool = False
+
 # Set which cluster method should be used for the PCA map (Default: AffinityPropagation)
 CLUSTER_METHOD: str = "AffinityPropagation"  # See sklearn.cluster for options
 N_CLUSTERS: int = 6  # Number of clusters; only relevant for some cluster methods
@@ -289,6 +293,10 @@ pca_map.legend(
     borderaxespad=1,
 )
 
+# Invert x-axis (PC1), if configured
+if INVERT_PC1_AXIS:
+    pca_map.invert_xaxis()
+
 # Define grid
 pca_map.xaxis.set_minor_locator(ticker.AutoLocator())
 pca_map.yaxis.set_minor_locator(ticker.AutoLocator())
@@ -296,6 +304,9 @@ pca_map.grid(True, which="major", linewidth=1.2)
 pca_map.grid(True, which="minor", linewidth=0.3)
 
 # Add labels to the dots
+map_label_x_offset: float = 0.05
+if INVERT_PC1_AXIS:
+    map_label_x_offset *= -1
 for party_name in party_pca.index:
     # pylint: disable=invalid-name
     color: str = "black"
@@ -304,7 +315,7 @@ for party_name in party_pca.index:
         color = "darkblue"
         fontweight = "bold"
     pca_map.text(
-        x=party_pca.loc[party_name, "pca_x"] + 0.05,
+        x=party_pca.loc[party_name, "pca_x"] + map_label_x_offset,
         y=party_pca.loc[party_name, "pca_y"] + 0.05,
         s=party_name,
         color=color,
@@ -345,6 +356,10 @@ infl_prep = infl_prep.melt(
     var_name="component",
     value_name="influence",
 )
+
+# Invert all pca_x influence values, if the x-axis is inverted on PCA map
+if INVERT_PC1_AXIS:
+    infl_prep.loc[infl_prep["component"] == "pca_x", "influence"] *= -1
 
 # Create and customize plot
 plt.clf()
