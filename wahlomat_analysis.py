@@ -42,8 +42,8 @@ from sklearn.decomposition import PCA
 # For more information see README.md
 
 # Set which election should be analysed
-ELECTION: str = "bundestagswahl2021"  # Part of the URL: www.wahl-o-mat.de/ELECTION/...
-ELECTION_NAME: str = "Bundestagswahl 2021"  # Only used in the titles of charts
+ELECTION: str = "bundestagswahl2025"  # Part of the URL: www.wahl-o-mat.de/ELECTION/...
+ELECTION_NAME: str = "Bundestagswahl 2025"  # Only used in the titles of charts
 
 # Invert x-axis (PC1) of the PCA map
 # This can be used to set the axis according to the classical left–right politcal spectrum
@@ -59,7 +59,9 @@ H_CLUSTER_METHOD = "average"  # See scipy.cluster.hierarchy.linkage for options
 H_CLUSTER_METRIC = "euclidean"  # See scipy.spatial.distance.pdist for options
 
 # Emphasize party names, if they appear
-EMPHASIZED_PARTIES = (  # Only lowercase (casefold)
+# Currently all parties which got > 2% in the Europawahl 2024
+# Use only lowercase (casefold)
+EMPHASIZED_PARTIES = (
     "die linke",
     "linke",
     "die grünen",
@@ -72,6 +74,9 @@ EMPHASIZED_PARTIES = (  # Only lowercase (casefold)
     "cdu/csu",
     "cdu / csu",
     "afd",
+    "bsw",
+    "volt",
+    "freie wähler",
 )
 
 # Set seaborn theme and config
