@@ -3,7 +3,7 @@
 Scrapes and analyzes www.wahl-o-mat.de German political party data.
 
 It generates a correlation heatmap and a principal component analysis map.
-On both clusters are indicated with two seperate calculations.
+On both charts clusters are indicated using two seperate calculations.
 
 For more information visit https://github.com/microraptor/wahlomat_analysis
 
@@ -21,17 +21,20 @@ There is a section to configure the settings after the imports.
 
 # Standard library
 import re
-import urllib.request
+from urllib import request as urlreq
 
 # External libraries
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
+from matplotlib import pyplot as plt
 from matplotlib import ticker
 from matplotlib.patches import Rectangle
 from sklearn import cluster
 from sklearn.decomposition import PCA
+
+# Only required if running Google Colab and downloading images
+# from google.colab import files
 
 
 # %% Settings
@@ -40,6 +43,7 @@ from sklearn.decomposition import PCA
 
 # Set which election should be analysed
 ELECTION: str = "bundestagswahl2021"  # Part of the URL: www.wahl-o-mat.de/ELECTION/...
+ELECTION_NAME: str = "Bundestagswahl 2021"  # Only used in the titles of charts
 
 # Set which cluster method should be used for the PCA map (Default: AffinityPropagation)
 CLUSTER_METHOD: str = "AffinityPropagation"  # See sklearn.cluster for options
@@ -51,7 +55,7 @@ H_CLUSTER_METHOD = "average"  # See scipy.cluster.hierarchy.linkage for options
 H_CLUSTER_METRIC = "euclidean"  # See scipy.spatial.distance.pdist for options
 
 # Emphasize party names, if they appear
-EMPHASIZED_PARTIES: list = [  # Only lowercase (casefold)
+EMPHASIZED_PARTIES = (  # Only lowercase (casefold)
     "die linke",
     "linke",
     "die grünen",
@@ -64,7 +68,7 @@ EMPHASIZED_PARTIES: list = [  # Only lowercase (casefold)
     "cdu/csu",
     "cdu / csu",
     "afd",
-]
+)
 
 # Set seaborn theme and config
 sns.set_theme(
@@ -81,7 +85,7 @@ sns.set_theme(
 url_request: str = (
     f"https://www.wahl-o-mat.de/{ELECTION}/app/definitionen/module_definition.js"
 )
-with urllib.request.urlopen(url_request) as response:  # nosec
+with urlreq.urlopen(url_request) as response:  # noqa: S310 # nosec: B310
     raw_data_js: str = response.read().decode()
 
 # Extract the data points with regex
@@ -123,6 +127,11 @@ bad_parties: pd.Index = party_df.loc[
 ].index
 for party_id in bad_parties:
     answer_df = answer_df[answer_df["party_id"] != party_id]
+
+# Shorten all party names over 16 characters long
+party_df["party_name"] = party_df["party_name"].apply(
+    lambda name: name if not (isinstance(name, str) and len(name) > 16) else name[:13] + "..."
+)
 
 # Modify answer dataframe to have party names as rows and questions as columns
 answer_df = answer_df.join(party_df, on="party_id")
@@ -181,7 +190,7 @@ pca_xvr, pca_yvr, pca_zvr = pca.explained_variance_ratio_
 # Create and customize plot
 plt.clf()
 diag_mask: np.ndarray = np.zeros_like(answer_corr, dtype=bool)
-np.fill_diagonal(diag_mask, True)
+np.fill_diagonal(diag_mask, val=True)
 c_matrix: sns.matrix.ClusterGrid = sns.clustermap(
     data=answer_corr,
     cmap="RdYlGn",
@@ -196,7 +205,7 @@ c_matrix: sns.matrix.ClusterGrid = sns.clustermap(
     method=H_CLUSTER_METHOD,
     metric=H_CLUSTER_METRIC,
 )
-c_matrix.fig.suptitle("Übereinstimmungen der Parteien", y=0.87)
+c_matrix.fig.suptitle(f"Übereinstimmungen der Parteien\n{ELECTION_NAME}", y=0.90)
 c_matrix.ax_col_dendrogram.remove()
 c_matrix.ax_row_dendrogram.set(title="Cluster-Hierarchie")
 c_matrix.ax_heatmap.set(
@@ -245,7 +254,8 @@ for party_label in labels_col:
     party_label.set_ha("right")
 
 # Save as a file or show plot
-plt.savefig(f"{ELECTION}_c_matrix.svg", bbox_inches="tight")
+plt.savefig(f"{ELECTION}_corr_heatmap.svg", bbox_inches="tight")
+# files.download(f"{ELECTION}_corr_heatmap.svg")  # Google Colab only
 # plt.show()
 
 
@@ -254,7 +264,7 @@ plt.savefig(f"{ELECTION}_c_matrix.svg", bbox_inches="tight")
 # Create and customize plot
 plt.clf()
 plt.figure(figsize=(10, 10))
-plt.suptitle("Hauptkomponentenanalyse (PCA) der Parteien", y=0.92)
+plt.suptitle(f"Hauptkomponentenanalyse (PCA) der Parteien\n{ELECTION_NAME}", y=0.94)
 pca_map: plt.Axes = sns.scatterplot(
     data=party_pca, x="pca_x", y="pca_y", hue="cluster", palette="bright", legend="full"
 )
@@ -269,7 +279,7 @@ pca_map.set(
 pca_map.legend(
     title="Clusters",
     handles=pca_map.get_legend_handles_labels()[0],
-    labels=[""] * party_pca["cluster"].nunique(),
+    labels=[""] * party_pca["cluster"].nunique(),  # noqa: WPS435
     facecolor="white",
     markerscale=1.5,
     ncol=2,
@@ -304,6 +314,7 @@ for party_name in party_pca.index:
 
 # Save as a file or show plot
 plt.savefig(f"{ELECTION}_pca_map.svg", bbox_inches="tight")
+# files.download(f"{ELECTION}_pca_map.svg")  # Google Colab only
 # plt.show()
 
 
@@ -312,7 +323,7 @@ plt.savefig(f"{ELECTION}_pca_map.svg", bbox_inches="tight")
 # Scale data and adjust dataframe for plotting function
 infl_prep = pca_influences.copy()
 infl_prep["answers_sum"] *= (
-    infl_prep[["pca_x", "pca_y"]].abs().max().max()  # max() reduces omly one dimension
+    infl_prep[["pca_x", "pca_y"]].abs().max().max()  # max() reduces only one dimension
     / infl_prep["answers_sum"].abs().max()
 )
 infl_prep = infl_prep.melt(
@@ -325,7 +336,7 @@ infl_prep = infl_prep.melt(
 # Create and customize plot
 plt.clf()
 plt.figure(figsize=(5, 18))
-plt.suptitle("Einfluss der Fragen", y=0.95)
+plt.suptitle(f"Einfluss der Fragen\n{ELECTION_NAME}", y=0.97)
 inf_barplot: plt.Axes = sns.barplot(
     data=infl_prep,
     x="influence",
@@ -357,12 +368,13 @@ inf_barplot.legend(
 inf_barplot.tick_params(axis="x", labelbottom=False, labeltop=True, length=0)
 
 # Set minor y-ticks to the same as major ticks, shift them and use them for the grid
-inf_barplot.set_yticks([x - 0.5 for x in inf_barplot.get_yticks()], minor=True)
+inf_barplot.set_yticks([pos - 0.5 for pos in inf_barplot.get_yticks()], minor=True)
 inf_barplot.grid(False, axis="x")
 inf_barplot.grid(True, which="minor", axis="y", linewidth=1)
 
 # Save as a file or show plot
 plt.savefig(f"{ELECTION}_pca_influences.svg", bbox_inches="tight")
+# files.download(f"{ELECTION}_pca_influences.svg")  # Google Colab only
 # plt.show()
 
 # %%
