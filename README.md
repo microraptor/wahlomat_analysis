@@ -14,17 +14,43 @@ This project is inspired by Reddit users /u/d_loose/ and /u/askLubich/.
 
 Please be aware it is highly questionable to pinpoint the political stance of a party solely on the very limited dataset of 30+ yes/no/abstain questions. Besides political opinions having more nuance than a simple yes/no and the parties actual behaviour differing from their answers given, the results of this analysis are also heavily influenced on what topics the questions are about and how the very short questions are phrased and then understood by the parties. Additionally, the analysis algorithms here are somewhat arbitrarily chosen. Nonetheless, the interesting thing to see here is that with every Wahl-O-Mat dataset PC1 of the 3 principal component analysis always seems to reflect somewhat the classical left-right wing spectrum.
 
-## Bundestagswahl 2021
+## Results
+
+Click on the charts below to see them in full size.
+
+If you want to see analysis results for Bundesland elections, just run the Notebook in Binder or Google Colab and change the ELECTION constant in the beginning of the script to the corresponding Wahl-O-Mat URL name.
+
+Please be careful when interpreting changes between different analysis results of Wahl-O-Mat datasets. Different political positions might be explained solely by a change of topic focus of the questions in the dataset and not by changed opinions of the parties. Since the PCA is computed separately between the results below, the components (especially PC2) might express completely different political meanings and should not be directly compared between results. Also the analysis only takes into account relative differences between the parties and overall political shifts of all parties are not shown.
+
+### Bundestagswahl 2021
 
 <span>
-    <img src="https://raw.githubusercontent.com/microraptor/wahlomat_analysis/main/bundestagswahl2021_c_matrix.svg" height="256" alt="Correlation Heatmap">
+    <img src="https://raw.githubusercontent.com/microraptor/wahlomat_analysis/main/results/bundestagswahl2021_corr_heatmap.svg" height="256" alt="Correlation Heatmap">
     &emsp;&emsp;
-    <img src="https://raw.githubusercontent.com/microraptor/wahlomat_analysis/main/bundestagswahl2021_pca_map.svg" height="256" alt="Principal Component Analysis">
+    <img src="https://raw.githubusercontent.com/microraptor/wahlomat_analysis/main/results/bundestagswahl2021_pca_map.svg" height="256" alt="Principal Component Analysis">
     &emsp;&emsp;
-    <img src="https://raw.githubusercontent.com/microraptor/wahlomat_analysis/main/bundestagswahl2021_pca_influences.svg" height="256" alt="Principal Component Influences">
+    <img src="https://raw.githubusercontent.com/microraptor/wahlomat_analysis/main/results/bundestagswahl2021_pca_influences.svg" height="256" alt="Principal Component Influences">
 </span>
 
-Click on the charts to see them in full size.
+### Europawahl 2024
+
+<span>
+    <img src="https://raw.githubusercontent.com/microraptor/wahlomat_analysis/main/results/europawahl2024_corr_heatmap.svg" height="256" alt="Correlation Heatmap">
+    &emsp;&emsp;
+    <img src="https://raw.githubusercontent.com/microraptor/wahlomat_analysis/main/results/europawahl2024_pca_map.svg" height="256" alt="Principal Component Analysis">
+    &emsp;&emsp;
+    <img src="https://raw.githubusercontent.com/microraptor/wahlomat_analysis/main/results/europawahl2024_pca_influences.svg" height="256" alt="Principal Component Influences">
+</span>
+
+### Bundestagswahl 2025
+
+<span>
+    <img src="https://raw.githubusercontent.com/microraptor/wahlomat_analysis/main/results/bundestagswahl2025_corr_heatmap.svg" height="256" alt="Correlation Heatmap">
+    &emsp;&emsp;
+    <img src="https://raw.githubusercontent.com/microraptor/wahlomat_analysis/main/results/bundestagswahl2025_pca_map.svg" height="256" alt="Principal Component Analysis">
+    &emsp;&emsp;
+    <img src="https://raw.githubusercontent.com/microraptor/wahlomat_analysis/main/results/bundestagswahl2025_pca_influences.svg" height="256" alt="Principal Component Influences">
+</span>
 
 ## Explanation
 
