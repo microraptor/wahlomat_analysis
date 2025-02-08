@@ -193,7 +193,7 @@ diag_mask: np.ndarray = np.zeros_like(answer_corr, dtype=bool)
 np.fill_diagonal(diag_mask, val=True)
 c_matrix: sns.matrix.ClusterGrid = sns.clustermap(
     data=answer_corr,
-    cmap="RdYlGn",
+    cmap="RdBu_r",  # "RdYlGn" is also good but not as colorblind-friendly
     center=0,
     cbar_pos=None,
     annot=answer_corr * 100,
@@ -218,7 +218,7 @@ labels_row: list = c_matrix.ax_heatmap.get_yticklabels()
 labels_col: list = c_matrix.ax_heatmap.get_xticklabels()
 for party_label in labels_row:
     if party_label.get_text().casefold() in EMPHASIZED_PARTIES:
-        party_label.set_color("darkblue")
+        party_label.set_color("darkgreen")
         party_label.set_fontweight("bold")
         pos_x, pos_y = party_label.get_position()
         c_matrix.ax_heatmap.add_patch(
@@ -234,7 +234,7 @@ for party_label in labels_row:
         )
 for party_label in labels_col:
     if party_label.get_text().casefold() in EMPHASIZED_PARTIES:
-        party_label.set_color("darkblue")
+        party_label.set_color("darkgreen")
         party_label.set_fontweight("bold")
         pos_x, pos_y = party_label.get_position()
         c_matrix.ax_heatmap.add_patch(
